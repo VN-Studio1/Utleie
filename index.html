@@ -144,6 +144,14 @@ label.f textarea{min-height:64px;resize:vertical}
 .contact a{font-size:.85rem;color:var(--brand);font-weight:600}
 .settings .fields{max-width:520px}
 .hint{font-size:.85rem;color:var(--muted);margin-top:10px}
+.inv{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:520px){.inv{grid-template-columns:1fr}}
+.inv .item{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.inv .item h3{font-size:1.05rem}
+.inv .item p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:1.3rem;font-weight:600;cursor:pointer;line-height:1}
+.stepper input{width:70px;height:40px;text-align:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-family:"Bricolage Grotesque",sans-serif;font-size:1.3rem;font-weight:700}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -172,6 +180,16 @@ label.f textarea{min-height:64px;resize:vertical}
       <div class="yearpick"><button id="yPrev" aria-label="Forrige år">‹</button><span class="label" id="yLabel"></span><button id="yNext" aria-label="Neste år">›</button></div>
       <div class="big" id="profitBig">0 kr</div>
       <div class="row" id="ledgerRow"></div>
+    </div>
+    <div class="inv">
+      <div class="item">
+        <div><h3>Stoler du har</h3><p id="invChairsFree"></p></div>
+        <div class="stepper"><button type="button" data-inv="chairs" data-step="-1" aria-label="Én stol færre">−</button><input type="number" min="0" id="invChairs" aria-label="Antall stoler"><button type="button" data-inv="chairs" data-step="1" aria-label="Én stol til">+</button></div>
+      </div>
+      <div class="item">
+        <div><h3>Bord du har</h3><p id="invTablesFree"></p></div>
+        <div class="stepper"><button type="button" data-inv="tables" data-step="-1" aria-label="Ett bord færre">−</button><input type="number" min="0" id="invTables" aria-label="Antall bord"><button type="button" data-inv="tables" data-step="1" aria-label="Ett bord til">+</button></div>
+      </div>
     </div>
     <div id="alerts"></div>
     <div class="grid2">
@@ -612,7 +630,21 @@ $('saveSettings').onclick=()=>{
   scheduleSave();renderAll();$('saveSettings').textContent='Lagret';setTimeout(()=>$('saveSettings').textContent='Lagre innstillinger',1500);
 };
 
-function renderAll(){renderOverview();renderCal();renderAllBookings();renderExpenses();fillSettings()}
+function renderInv(){
+  const s=state.settings,u=usageOn(today);
+  if(document.activeElement!==$('invChairs'))$('invChairs').value=s.chairs;
+  if(document.activeElement!==$('invTables'))$('invTables').value=s.tables;
+  $('invChairsFree').textContent=Math.max(s.chairs-u.c,0)+' ledige i dag · '+kr(s.chairPrice)+' per stk';
+  $('invTablesFree').textContent=Math.max(s.tables-u.t,0)+' ledige i dag · '+kr(s.tablePrice)+' per stk';
+}
+function setInv(key,val){
+  state.settings[key]=Math.max(0,Math.round(+val||0));
+  scheduleSave();renderAll();
+}
+document.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>setInv(b.dataset.inv,state.settings[b.dataset.inv]+(+b.dataset.step)));
+$('invChairs').addEventListener('change',e=>setInv('chairs',e.target.value));
+$('invTables').addEventListener('change',e=>setInv('tables',e.target.value));
+function renderAll(){renderInv();renderOverview();renderCal();renderAllBookings();renderExpenses();fillSettings()}
 init();
 })();
 </script>
