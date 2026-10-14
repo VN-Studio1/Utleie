@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Utleie – stoler og bord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#16262B; --muted:#5B6C70; --line:#D5DEDC;
+  --brand:#1F4E5F; --brand-ink:#FFFFFF; --sun:#E3B23C; --sun-soft:#FBF0D3;
+  --good:#2E7D5B; --good-soft:#DDF0E6; --bad:#B23A3A; --bad-soft:#F6DEDE;
+  --chair:#1F4E5F; --table:#C98A12;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1A1D; --surface:#172529; --ink:#E6EEEC; --muted:#93A6A9; --line:#2A3C40;
+    --brand:#5FA8BF; --brand-ink:#0F1A1D; --sun:#E8BC52; --sun-soft:#3A3120;
+    --good:#6BC79A; --good-soft:#1E3A2E; --bad:#E07A7A; --bad-soft:#3E2324;
+    --chair:#5FA8BF; --table:#E8BC52; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1A1D; --surface:#172529; --ink:#E6EEEC; --muted:#93A6A9; --line:#2A3C40;
+  --brand:#5FA8BF; --brand-ink:#0F1A1D; --sun:#E8BC52; --sun-soft:#3A3120;
+  --good:#6BC79A; --good-soft:#1E3A2E; --bad:#E07A7A; --bad-soft:#3E2324;
+  --chair:#5FA8BF; --table:#E8BC52; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;font-weight:700;line-height:1.15;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 96px}
+
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+header.top h1{font-size:clamp(1.6rem,4vw,2.2rem);letter-spacing:-.01em}
+header.top p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+.save-state{font-size:.8rem;color:var(--muted);white-space:nowrap}
+
+nav.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:20px;overflow-x:auto}
+nav.tabs button{flex:1;border:0;background:none;padding:9px 12px;border-radius:10px;cursor:pointer;font-weight:600;color:var(--muted);white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--brand);color:var(--brand-ink)}
+
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn.small{padding:6px 10px;font-size:.88rem}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));border-radius:999px;padding:14px 20px;box-shadow:0 6px 18px rgba(20,40,45,.25);z-index:5}
+
+/* Overview */
+.ledger{background:var(--brand);color:var(--brand-ink);border-radius:20px;padding:22px 22px 18px;margin-bottom:16px}
+.ledger .label{opacity:.8;font-size:.95rem}
+.ledger .big{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:700;line-height:1;margin:6px 0 14px;letter-spacing:-.02em}
+.ledger .row{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.95rem}
+.ledger .row b{font-weight:600}
+.yearpick{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.yearpick button{background:rgba(255,255,255,.15);border:0;border-radius:8px;color:inherit;width:30px;height:30px;cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel h2{font-size:1.15rem;margin-bottom:12px}
+.bars{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:140px}
+.bars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.7rem;color:var(--muted)}
+.bars span.bar{width:100%;background:var(--brand);border-radius:4px 4px 0 0;min-height:2px}
+.bars span.bar.now{background:var(--sun)}
+.alert{background:var(--sun-soft);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:.93rem}
+
+/* Booking list */
+.blist{display:flex;flex-direction:column;gap:8px}
+.bitem{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;text-align:left;width:100%}
+.bitem:hover{border-color:var(--brand)}
+.datebox{text-align:center;min-width:46px}
+.datebox .d{font-family:"Bricolage Grotesque",sans-serif;font-size:1.4rem;font-weight:700;line-height:1}
+.datebox .m{font-size:.75rem;color:var(--muted)}
+.bitem .who{font-weight:600}
+.bitem .what{font-size:.88rem;color:var(--muted)}
+.bitem .amt{text-align:right;font-weight:600}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:3px}
+.tag.paid{background:var(--good-soft);color:var(--good)}
+.tag.unpaid{background:var(--bad-soft);color:var(--bad)}
+.tag.status{background:var(--bg);color:var(--muted)}
+.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:14px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filters input,.filters select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.filters input{flex:1;min-width:160px}
+
+/* Calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead h2{font-size:1.4rem;text-transform:capitalize}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .wd{font-size:.75rem;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal button.day{aspect-ratio:1/1.05;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;min-width:0;overflow:hidden}
+.cal button.day.other{opacity:.4}
+.cal button.day.today{border-color:var(--sun);border-width:2px}
+.cal button.day.sel{background:var(--sun-soft)}
+.cal .num{font-size:.85rem;font-weight:600}
+.cal .use{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:2px}
+.cal .use i{display:block;height:5px;border-radius:3px;background:var(--line);overflow:hidden;position:relative}
+.cal .use i b{position:absolute;inset:0 auto 0 0;background:var(--chair)}
+.cal .use i.t b{background:var(--table)}
+.cal .use i.over b{background:var(--bad)}
+.cal .cnt{font-size:.68rem;color:var(--muted);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.legend{display:flex;gap:16px;font-size:.82rem;color:var(--muted);margin:10px 0 16px}
+.legend span::before{content:"";display:inline-block;width:12px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle;background:var(--chair)}
+.legend span.t::before{background:var(--table)}
+.legend span.o::before{background:var(--bad)}
+.dayinfo h3{font-size:1.05rem;margin-bottom:8px}
+.dayinfo .free{font-size:.92rem;color:var(--muted);margin-bottom:10px}
+
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:.82rem}
+td.num,th.num{text-align:right}
+
+/* Forms */
+dialog{border:0;border-radius:18px;padding:0;width:min(560px,94vw);max-height:92vh;background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,24,.5)}
+.dlg{padding:20px}
+.dlg h2{font-size:1.35rem;margin-bottom:14px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fields .full{grid-column:1/-1}
+@media(max-width:480px){.fields{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:600;color:var(--muted)}
+label.f input,label.f select,label.f textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:400;color:var(--ink);width:100%}
+label.f textarea{min-height:64px;resize:vertical}
+.check{display:flex;align-items:center;gap:8px;font-weight:600;font-size:.92rem}
+.check input{width:20px;height:20px}
+.pricebox{background:var(--bg);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pricebox .sum{font-family:"Bricolage Grotesque",sans-serif;font-size:1.6rem;font-weight:700}
+.warn{color:var(--bad);font-size:.88rem;font-weight:600}
+.okline{color:var(--muted);font-size:.88rem}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.actions .spacer{flex:1}
+.contact{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.contact a{font-size:.85rem;color:var(--brand);font-weight:600}
+.settings .fields{max-width:520px}
+.hint{font-size:.85rem;color:var(--muted);margin-top:10px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Stol- og bordutleie</h1>
+      <p>Utleier, kunder og hva du har tjent</p>
+    </div>
+    <span class="save-state" id="saveState">Laster …</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="oversikt" aria-selected="true">Oversikt</button>
+    <button role="tab" data-tab="kalender" aria-selected="false">Kalender</button>
+    <button role="tab" data-tab="utleier" aria-selected="false">Utleier</button>
+    <button role="tab" data-tab="utgifter" aria-selected="false">Utgifter</button>
+    <button role="tab" data-tab="innstillinger" aria-selected="false">Innstillinger</button>
+  </nav>
+
+  <!-- Oversikt -->
+  <section id="tab-oversikt">
+    <div class="ledger">
+      <div class="yearpick"><button id="yPrev" aria-label="Forrige år">‹</button><span class="label" id="yLabel"></span><button id="yNext" aria-label="Neste år">›</button></div>
+      <div class="big" id="profitBig">0 kr</div>
+      <div class="row" id="ledgerRow"></div>
+    </div>
+    <div id="alerts"></div>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Kommende og pågående</h2>
+        <div class="blist" id="upcoming"></div>
+      </div>
+      <div class="panel">
+        <h2>Inntekt per måned</h2>
+        <div class="bars" id="bars"></div>
+        <p class="hint" id="barsHint"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Kalender -->
+  <section id="tab-kalender" hidden>
+    <div class="calhead">
+      <button class="btn ghost small" id="mPrev" aria-label="Forrige måned">‹</button>
+      <h2 id="mLabel"></h2>
+      <button class="btn ghost small" id="mNext" aria-label="Neste måned">›</button>
+    </div>
+    <div class="cal" id="cal"></div>
+    <div class="legend"><span>Stoler ute</span><span class="t">Bord ute</span><span class="o">Overbooket</span></div>
+    <div class="panel dayinfo" id="dayInfo"></div>
+  </section>
+
+  <!-- Utleier -->
+  <section id="tab-utleier" hidden>
+    <div class="filters">
+      <input type="search" id="q" placeholder="Søk på navn, telefon eller sted">
+      <select id="fStatus">
+        <option value="">Alle</option>
+        <option value="kommende">Kommende</option>
+        <option value="ubetalt">Ikke betalt</option>
+        <option value="ferdig">Ferdige</option>
+        <option value="kansellert">Kansellert</option>
+      </select>
+    </div>
+    <div class="blist" id="allBookings"></div>
+  </section>
+
+  <!-- Utgifter -->
+  <section id="tab-utgifter" hidden>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+        <h2 style="margin:0">Utgifter</h2>
+        <button class="btn small" id="addExpense">Legg til utgift</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Dato</th><th>Hva</th><th class="num">Beløp</th><th></th></tr></thead>
+        <tbody id="expBody"></tbody>
+      </table></div>
+      <p class="hint">Innkjøp av stoler og bord, FINN-annonser, bensin og lignende. Trekkes fra inntekten så du ser faktisk profitt.</p>
+    </div>
+  </section>
+
+  <!-- Innstillinger -->
+  <section id="tab-innstillinger" hidden>
+    <div class="panel settings">
+      <h2>Utstyr og priser</h2>
+      <div class="fields">
+        <label class="f">Antall stoler du eier<input type="number" min="0" id="sChairs"></label>
+        <label class="f">Pris per stol (kr)<input type="number" min="0" id="sChairPrice"></label>
+        <label class="f">Antall bord du eier<input type="number" min="0" id="sTables"></label>
+        <label class="f">Pris per bord (kr)<input type="number" min="0" id="sTablePrice"></label>
+        <label class="f">Standard leveringspris (kr)<input type="number" min="0" id="sDelivery"></label>
+      </div>
+      <p class="hint">Prisen er fast per stykk uansett hvor mange dager. Du kan alltid overstyre totalprisen på hver utleie.</p>
+      <div class="actions" style="justify-content:flex-start"><button class="btn" id="saveSettings">Lagre innstillinger</button></div>
+    </div>
+  </section>
+</div>
+
+<button class="btn fab" id="newBooking">+ Ny utleie</button>
+
+<!-- Booking dialog -->
+<dialog id="bDlg">
+  <form class="dlg" id="bForm" method="dialog">
+    <h2 id="bTitle">Ny utleie</h2>
+    <div class="fields">
+      <label class="f full">Navn<input id="bName" required autocomplete="off"></label>
+      <label class="f">Telefon<input id="bPhone" type="tel" autocomplete="off"></label>
+      <label class="f">E-post<input id="bEmail" type="email" autocomplete="off"></label>
+      <label class="f full">Adresse / sted<input id="bAddr" autocomplete="off"></label>
+      <div class="contact full" id="bContact"></div>
+      <label class="f">Hentes / leveres<input id="bFrom" type="date" required></label>
+      <label class="f">Leveres tilbake<input id="bTo" type="date" required></label>
+      <label class="f">Antall stoler<input id="bChairs" type="number" min="0" value="0"></label>
+      <label class="f">Antall bord<input id="bTables" type="number" min="0" value="0"></label>
+      <div class="full" id="bAvail"></div>
+      <label class="check full"><input type="checkbox" id="bDeliver"> Jeg leverer (levering koster <span id="bDelivPrice"></span>)</label>
+      <div class="pricebox full">
+        <div><div class="okline">Totalpris</div><div class="sum" id="bSum">0 kr</div></div>
+        <label class="f" style="max-width:150px">Egen pris (valgfritt)<input id="bOverride" type="number" min="0" placeholder="Auto"></label>
+      </div>
+      <label class="f">Status
+        <select id="bStatus">
+          <option value="reservert">Reservert</option>
+          <option value="utlevert">Utlevert</option>
+          <option value="tilbake">Levert tilbake</option>
+          <option value="kansellert">Kansellert</option>
+        </select>
+      </label>
+      <label class="f">Betaling
+        <select id="bPayMethod">
+          <option value="Vipps">Vipps</option>
+          <option value="Kontant">Kontant</option>
+          <option value="Bankoverføring">Bankoverføring</option>
+        </select>
+      </label>
+      <label class="check full"><input type="checkbox" id="bPaid"> Betalt</label>
+      <label class="f full">Notat<textarea id="bNote" placeholder="F.eks. bryllup, skal hentes etter kl. 17"></textarea></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="bDelete" hidden>Slett</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="bCancel">Avbryt</button>
+      <button type="submit" class="btn" id="bSave">Lagre utleie</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Expense dialog -->
+<dialog id="eDlg">
+  <form class="dlg" id="eForm" method="dialog">
+    <h2>Ny utgift</h2>
+    <div class="fields">
+      <label class="f">Dato<input id="eDate" type="date" required></label>
+      <label class="f">Beløp (kr)<input id="eAmt" type="number" min="0" required></label>
+      <label class="f full">Hva<input id="eWhat" required placeholder="F.eks. 20 nye klappstoler"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="eCancel">Avbryt</button>
+      <button type="submit" class="btn">Lagre utgift</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+const LS_KEY='utleie-app-v1';
+const DEFAULT={settings:{chairs:50,chairPrice:30,tables:5,tablePrice:100,delivery:200},bookings:[],expenses:[]};
+let state=JSON.parse(JSON.stringify(DEFAULT));
+let docRef=null, saveTimer=null;
+const $=id=>document.getElementById(id);
+const kr=n=>new Intl.NumberFormat('nb-NO',{maximumFractionDigits:0}).format(Math.round(n||0))+' kr';
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today=iso(new Date());
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const MONTHS=['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+const MONTHS_FULL=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const STATUS={reservert:'Reservert',utlevert:'Utlevert',tilbake:'Levert tilbake',kansellert:'Kansellert'};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- storage ---------- */
+function setSave(t){$('saveState').textContent=t}
+function scheduleSave(){
+  setSave('Lagrer …');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(persist,500);
+}
+async function persist(){
+  const payload=JSON.parse(JSON.stringify(state));
+  if(docRef){
+    try{await docRef.set(payload);setSave('Lagret');return}
+    catch(e){
+      if(e&&e.code==='unavailable'){setTimeout(persist,1500+Math.random()*1000);return}
+      setSave('Kunne ikke lagre i skyen – lagret lokalt');
+    }
+  }
+  try{localStorage.setItem(LS_KEY,JSON.stringify(payload));if(!docRef)setSave('Lagret på denne enheten')}catch(e){setSave('Kunne ikke lagre')}
+}
+function loadLocal(){
+  try{const raw=localStorage.getItem(LS_KEY);if(raw)return JSON.parse(raw)}catch(e){}
+  return null;
+}
+function merge(d){
+  if(!d)return;
+  state={settings:Object.assign({},DEFAULT.settings,d.settings||{}),bookings:Array.isArray(d.bookings)?d.bookings:[],expenses:Array.isArray(d.expenses)?d.expenses:[]};
+}
+async function init(){
+  merge(loadLocal());
+  renderAll();
+  setSave('Lagret på denne enheten');
+  try{
+    if(!window.claude||!claude.use){return}
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!db||!user)return;
+    const id=await user.id();
+    if(!id)return;
+    docRef=db.doc('data/users/'+id+'/rental');
+    const snap=await docRef.get();
+    if(snap.exists){merge(snap.data());renderAll()}
+    else if(state.bookings.length||state.expenses.length){await persist()}
+    setSave('Synkronisert');
+  }catch(e){setSave('Lagret på denne enheten')}
+}
+
+/* ---------- logic ---------- */
+function price(b){
+  if(b.override!==''&&b.override!=null&&!isNaN(+b.override))return +b.override;
+  const s=state.settings;
+  return (+b.chairs||0)*s.chairPrice+(+b.tables||0)*s.tablePrice+(b.deliver?+s.delivery:0);
+}
+const active=b=>b.status!=='kansellert';
+function usageOn(day,excludeId){
+  let c=0,t=0;
+  for(const b of state.bookings){
+    if(!active(b)||b.id===excludeId)continue;
+    if(b.from<=day&&day<=b.to){c+=+b.chairs||0;t+=+b.tables||0}
+  }
+  return {c,t};
+}
+function peakInRange(from,to,excludeId){
+  let c=0,t=0;if(!from||!to||to<from)return {c,t};
+  const d=parse(from),end=parse(to);let guard=0;
+  while(d<=end&&guard++<400){const u=usageOn(iso(d),excludeId);c=Math.max(c,u.c);t=Math.max(t,u.t);d.setDate(d.getDate()+1)}
+  return {c,t};
+}
+function bookingsOn(day){return state.bookings.filter(b=>b.from<=day&&day<=b.to).sort((a,b)=>a.from.localeCompare(b.from))}
+function whatText(b){
+  const p=[];
+  if(+b.chairs)p.push(b.chairs+' stoler');
+  if(+b.tables)p.push(b.tables+' bord');
+  if(b.deliver)p.push('levering');
+  return p.join(', ')||'Ingen utstyr valgt';
+}
+function dateRange(b){
+  const f=parse(b.from),t=parse(b.to);
+  if(b.from===b.to)return f.getDate()+'. '+MONTHS[f.getMonth()];
+  return f.getDate()+'. '+MONTHS[f.getMonth()]+' – '+t.getDate()+'. '+MONTHS[t.getMonth()];
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b===btn));
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>s.hidden=s.id!=='tab-'+btn.dataset.tab);
+  try{sessionStorage.setItem('utleie-tab',btn.dataset.tab)}catch(e){}
+}));
+try{const t=sessionStorage.getItem('utleie-tab');if(t){const b=document.querySelector('nav.tabs button[data-tab="'+t+'"]');if(b)b.click()}}catch(e){}
+
+/* ---------- overview ---------- */
+let viewYear=new Date().getFullYear();
+$('yPrev').onclick=()=>{viewYear--;renderOverview()};
+$('yNext').onclick=()=>{viewYear++;renderOverview()};
+function renderOverview(){
+  const y=String(viewYear);
+  const inYear=state.bookings.filter(b=>active(b)&&b.from.startsWith(y));
+  const paid=inYear.filter(b=>b.paid).reduce((s,b)=>s+price(b),0);
+  const unpaid=inYear.filter(b=>!b.paid).reduce((s,b)=>s+price(b),0);
+  const exp=state.expenses.filter(e=>e.date.startsWith(y)).reduce((s,e)=>s+(+e.amount||0),0);
+  const thisMonth=today.slice(0,7);
+  const monthIncome=state.bookings.filter(b=>active(b)&&b.paid&&b.from.startsWith(thisMonth)).reduce((s,b)=>s+price(b),0);
+  const allTime=state.bookings.filter(b=>active(b)&&b.paid).reduce((s,b)=>s+price(b),0)-state.expenses.reduce((s,e)=>s+(+e.amount||0),0);
+  $('yLabel').textContent='Profitt i '+y;
+  $('profitBig').textContent=kr(paid-exp);
+  $('ledgerRow').innerHTML=
+    '<span>Tjent: <b>'+kr(paid)+'</b></span>'+
+    '<span>Utgifter: <b>'+kr(exp)+'</b></span>'+
+    '<span>Ikke betalt ennå: <b>'+kr(unpaid)+'</b></span>'+
+    (y===today.slice(0,4)?'<span>Denne måneden: <b>'+kr(monthIncome)+'</b></span>':'')+
+    '<span>'+inYear.length+' utleier</span>'+
+    '<span>Totalt alle år: <b>'+kr(allTime)+'</b></span>';
+
+  // alerts
+  const al=[];
+  const overdue=state.bookings.filter(b=>b.status==='utlevert'&&b.to<today);
+  if(overdue.length)al.push('<div class="alert"><b>'+overdue.length+' utleie'+(overdue.length>1?'r':'')+' skulle vært levert tilbake:</b> '+overdue.map(b=>esc(b.name)).join(', ')+'</div>');
+  const owed=state.bookings.filter(b=>active(b)&&!b.paid&&b.to<today);
+  if(owed.length)al.push('<div class="alert"><b>Mangler betaling fra:</b> '+owed.map(b=>esc(b.name)+' ('+kr(price(b))+')').join(', ')+'</div>');
+  $('alerts').innerHTML=al.join('');
+
+  const up=state.bookings.filter(b=>active(b)&&b.to>=today&&b.status!=='tilbake').sort((a,b)=>a.from.localeCompare(b.from)).slice(0,6);
+  renderList($('upcoming'),up,'Ingen kommende utleier. Trykk «Ny utleie» når noen tar kontakt.');
+
+  const months=Array(12).fill(0);
+  inYear.forEach(b=>{if(b.paid)months[+b.from.slice(5,7)-1]+=price(b)});
+  const max=Math.max(...months,1);
+  const cm=y===today.slice(0,4)?new Date().getMonth():-1;
+  $('bars').innerHTML=months.map((v,i)=>'<div title="'+MONTHS_FULL[i]+': '+kr(v)+'"><span class="bar'+(i===cm?' now':'')+'" style="height:'+(v/max*100)+'%"></span>'+MONTHS[i].slice(0,1).toUpperCase()+'</div>').join('');
+  const best=months.indexOf(Math.max(...months));
+  $('barsHint').textContent=months[best]>0?'Beste måned: '+MONTHS_FULL[best]+' med '+kr(months[best])+'. Bare betalte utleier telles.':'Bare betalte utleier telles.';
+}
+function renderList(el,list,emptyText){
+  if(!list.length){el.innerHTML='<div class="empty">'+emptyText+'</div>';return}
+  el.innerHTML='';
+  list.forEach(b=>{
+    const f=parse(b.from);
+    const btn=document.createElement('button');
+    btn.className='bitem';btn.type='button';
+    btn.innerHTML='<div class="datebox"><div class="d">'+f.getDate()+'</div><div class="m">'+MONTHS[f.getMonth()]+'</div></div>'+
+      '<div><div class="who">'+esc(b.name)+'</div><div class="what">'+esc(whatText(b))+' · '+dateRange(b)+'</div>'+
+      '<span class="tag status">'+STATUS[b.status]+'</span></div>'+
+      '<div class="amt">'+kr(price(b))+'<br><span class="tag '+(b.paid?'paid':'unpaid')+'">'+(b.paid?'Betalt':'Ikke betalt')+'</span></div>';
+    btn.onclick=()=>openBooking(b);
+    el.appendChild(btn);
+  });
+}
+
+/* ---------- calendar ---------- */
+let calY=new Date().getFullYear(),calM=new Date().getMonth(),selDay=today;
+$('mPrev').onclick=()=>{calM--;if(calM<0){calM=11;calY--}renderCal()};
+$('mNext').onclick=()=>{calM++;if(calM>11){calM=0;calY++}renderCal()};
+function renderCal(){
+  $('mLabel').textContent=MONTHS_FULL[calM]+' '+calY;
+  const s=state.settings;
+  const first=new Date(calY,calM,1);
+  const start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+  let h=['man','tir','ons','tor','fre','lør','søn'].map(d=>'<div class="wd">'+d+'</div>').join('');
+  const d=new Date(start);
+  for(let i=0;i<42;i++){
+    const day=iso(d);const u=usageOn(day);
+    const cls=['day'];if(d.getMonth()!==calM)cls.push('other');if(day===today)cls.push('today');if(day===selDay)cls.push('sel');
+    const cp=s.chairs?Math.min(u.c/s.chairs,1)*100:0,tp=s.tables?Math.min(u.t/s.tables,1)*100:0;
+    let use='';
+    if(u.c||u.t){
+      use='<div class="use">'+
+        (u.c?'<i class="'+(u.c>s.chairs?'over':'')+'"><b style="width:'+cp+'%"></b></i>':'')+
+        (u.t?'<i class="t '+(u.t>s.tables?'over':'')+'"><b style="width:'+tp+'%"></b></i>':'')+
+        '<span class="cnt">'+(u.c?u.c+'s ':'')+(u.t?u.t+'b':'')+'</span></div>';
+    }
+    h+='<button type="button" class="'+cls.join(' ')+'" data-day="'+day+'" aria-label="'+d.getDate()+'. '+MONTHS_FULL[d.getMonth()]+(u.c||u.t?', '+u.c+' stoler og '+u.t+' bord ute':'')+'"><span class="num">'+d.getDate()+'</span>'+use+'</button>';
+    d.setDate(d.getDate()+1);
+  }
+  $('cal').innerHTML=h;
+  $('cal').querySelectorAll('button.day').forEach(b=>b.onclick=()=>{selDay=b.dataset.day;renderCal()});
+  renderDayInfo();
+}
+function renderDayInfo(){
+  const s=state.settings,u=usageOn(selDay),dd=parse(selDay);
+  const list=bookingsOn(selDay).filter(active);
+  const el=$('dayInfo');
+  el.innerHTML='<h3>'+dd.getDate()+'. '+MONTHS_FULL[dd.getMonth()]+'</h3>'+
+    '<div class="free">Ledig: '+Math.max(s.chairs-u.c,0)+' av '+s.chairs+' stoler, '+Math.max(s.tables-u.t,0)+' av '+s.tables+' bord'+
+    ((u.c>s.chairs||u.t>s.tables)?' <span class="warn">· Overbooket</span>':'')+'</div><div class="blist" id="dayList"></div>'+
+    '<div class="actions" style="justify-content:flex-start"><button class="btn small" id="newOnDay">Ny utleie denne dagen</button></div>';
+  renderList($('dayList'),list,'Ingen utleier denne dagen.');
+  $('newOnDay').onclick=()=>openBooking(null,selDay);
+}
+
+/* ---------- all bookings ---------- */
+$('q').oninput=renderAllBookings;$('fStatus').onchange=renderAllBookings;
+function renderAllBookings(){
+  const q=$('q').value.trim().toLowerCase(),f=$('fStatus').value;
+  let list=state.bookings.slice().sort((a,b)=>b.from.localeCompare(a.from));
+  if(q)list=list.filter(b=>[b.name,b.phone,b.email,b.addr,b.note].join(' ').toLowerCase().includes(q));
+  if(f==='kommende')list=list.filter(b=>active(b)&&b.to>=today&&b.status!=='tilbake');
+  if(f==='ubetalt')list=list.filter(b=>active(b)&&!b.paid);
+  if(f==='ferdig')list=list.filter(b=>b.status==='tilbake');
+  if(f==='kansellert')list=list.filter(b=>b.status==='kansellert');
+  renderList($('allBookings'),list,state.bookings.length?'Ingen utleier passer søket.':'Ingen utleier ennå. Trykk «Ny utleie» for å legge inn den første.');
+}
+
+/* ---------- booking dialog ---------- */
+let editing=null;
+const bf={name:'bName',phone:'bPhone',email:'bEmail',addr:'bAddr',from:'bFrom',to:'bTo',chairs:'bChairs',tables:'bTables',override:'bOverride',status:'bStatus',payMethod:'bPayMethod',note:'bNote'};
+function openBooking(b,day){
+  editing=b?b.id:null;
+  const v=b||{name:'',phone:'',email:'',addr:'',from:day||today,to:day||today,chairs:0,tables:0,override:'',status:'reservert',payMethod:'Vipps',note:'',paid:false,deliver:false};
+  for(const k in bf)$(bf[k]).value=v[k]??'';
+  $('bPaid').checked=!!v.paid;$('bDeliver').checked=!!v.deliver;
+  $('bTitle').textContent=b?'Utleie til '+b.name:'Ny utleie';
+  $('bSave').textContent=b?'Lagre endringer':'Lagre utleie';
+  $('bDelete').hidden=!b;
+  $('bDelivPrice').textContent=kr(state.settings.delivery);
+  updateForm();
+  $('bDlg').showModal();
+}
+function formData(){
+  const o={};for(const k in bf)o[k]=$(bf[k]).value;
+  o.chairs=+o.chairs||0;o.tables=+o.tables||0;o.paid=$('bPaid').checked;o.deliver=$('bDeliver').checked;
+  return o;
+}
+function updateForm(){
+  const o=formData(),s=state.settings;
+  $('bSum').textContent=kr(price(o));
+  const pk=peakInRange(o.from,o.to,editing);
+  const fc=s.chairs-pk.c,ft=s.tables-pk.t;
+  let h='';
+  if(o.to&&o.from&&o.to<o.from)h='<div class="warn">Tilbakeleveringen er før hentedagen.</div>';
+  else{
+    h='<div class="okline">Ledig i perioden: '+Math.max(fc,0)+' stoler og '+Math.max(ft,0)+' bord</div>';
+    if(o.chairs>fc)h+='<div class="warn">Du har bare '+Math.max(fc,0)+' ledige stoler i denne perioden.</div>';
+    if(o.tables>ft)h+='<div class="warn">Du har bare '+Math.max(ft,0)+' ledige bord i denne perioden.</div>';
+  }
+  $('bAvail').innerHTML=h;
+  const c=[];
+  if(o.phone){const p=o.phone.replace(/\s/g,'');c.push('<a href="tel:'+esc(p)+'">Ring</a>','<a href="sms:'+esc(p)+'">Send SMS</a>')}
+  if(o.email)c.push('<a href="mailto:'+esc(o.email)+'">Send e-post</a>');
+  if(o.addr)c.push('<a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.addr)+'">Åpne i kart</a>');
+  $('bContact').innerHTML=c.join('');
+}
+$('bForm').addEventListener('input',updateForm);
+$('bFrom').addEventListener('change',()=>{if($('bTo').value<$('bFrom').value)$('bTo').value=$('bFrom').value;updateForm()});
+$('bCancel').onclick=()=>$('bDlg').close();
+$('bForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const o=formData();
+  if(!o.name.trim()){$('bName').focus();return}
+  if(o.to<o.from){$('bTo').focus();return}
+  if(editing){const i=state.bookings.findIndex(b=>b.id===editing);state.bookings[i]=Object.assign({},state.bookings[i],o)}
+  else state.bookings.push(Object.assign({id:uid(),created:today},o));
+  $('bDlg').close();scheduleSave();renderAll();
+});
+$('bDelete').onclick=()=>{
+  if(!editing)return;
+  if(!confirm('Slette denne utleien? Det kan ikke angres.'))return;
+  state.bookings=state.bookings.filter(b=>b.id!==editing);
+  $('bDlg').close();scheduleSave();renderAll();
+};
+$('newBooking').onclick=()=>openBooking(null,null);
+
+/* ---------- expenses ---------- */
+$('addExpense').onclick=()=>{$('eDate').value=today;$('eAmt').value='';$('eWhat').value='';$('eDlg').showModal()};
+$('eCancel').onclick=()=>$('eDlg').close();
+$('eForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  state.expenses.push({id:uid(),date:$('eDate').value,amount:+$('eAmt').value||0,what:$('eWhat').value.trim()});
+  $('eDlg').close();scheduleSave();renderAll();
+});
+function renderExpenses(){
+  const list=state.expenses.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(!list.length){$('expBody').innerHTML='<tr><td colspan="4" style="color:var(--muted)">Ingen utgifter lagt inn.</td></tr>';return}
+  $('expBody').innerHTML=list.map(x=>{const d=parse(x.date);return '<tr><td>'+d.getDate()+'. '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</td><td>'+esc(x.what)+'</td><td class="num">'+kr(x.amount)+'</td><td class="num"><button class="btn ghost small" data-del="'+x.id+'" aria-label="Slett utgift">Slett</button></td></tr>'}).join('');
+  $('expBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Slette denne utgiften?'))return;
+    state.expenses=state.expenses.filter(x=>x.id!==b.dataset.del);scheduleSave();renderAll();
+  });
+}
+
+/* ---------- settings ---------- */
+function fillSettings(){const s=state.settings;$('sChairs').value=s.chairs;$('sChairPrice').value=s.chairPrice;$('sTables').value=s.tables;$('sTablePrice').value=s.tablePrice;$('sDelivery').value=s.delivery}
+$('saveSettings').onclick=()=>{
+  state.settings={chairs:+$('sChairs').value||0,chairPrice:+$('sChairPrice').value||0,tables:+$('sTables').value||0,tablePrice:+$('sTablePrice').value||0,delivery:+$('sDelivery').value||0};
+  scheduleSave();renderAll();$('saveSettings').textContent='Lagret';setTimeout(()=>$('saveSettings').textContent='Lagre innstillinger',1500);
+};
+
+function renderAll(){renderOverview();renderCal();renderAllBookings();renderExpenses();fillSettings()}
+init();
+})();
+</script>
+</body>
+</html>
