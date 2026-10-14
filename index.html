@@ -261,6 +261,15 @@ label.f textarea{min-height:64px;resize:vertical}
       <p class="hint">Prisen er fast per stykk uansett hvor mange dager. Du kan alltid overstyre totalprisen på hver utleie.</p>
       <div class="actions" style="justify-content:flex-start"><button class="btn" id="saveSettings">Lagre innstillinger</button></div>
     </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Backup og flytting</h2>
+      <p class="hint" style="margin-top:0">Last ned alt som en fil, og hent det inn igjen på en annen enhet eller i en annen versjon av appen. Ved henting legges utleier og utgifter til de du allerede har, uten dobbeltføringer.</p>
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn" id="exportBtn">Last ned backup</button>
+        <label class="btn ghost" style="display:inline-block">Hent inn backup<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+      </div>
+      <p class="hint" id="backupMsg"></p>
+    </div>
   </section>
 </div>
 
@@ -644,6 +653,37 @@ function setInv(key,val){
 document.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>setInv(b.dataset.inv,state.settings[b.dataset.inv]+(+b.dataset.step)));
 $('invChairs').addEventListener('change',e=>setInv('chairs',e.target.value));
 $('invTables').addEventListener('change',e=>setInv('tables',e.target.value));
+async function exportData(){
+  const json=JSON.stringify(state,null,2),name='utleie-backup-'+today+'.json';
+  let dl=null;
+  try{if(window.claude&&claude.use)dl=await claude.use('downloads')}catch(e){}
+  if(dl){
+    try{await dl.save({filename:name,data:json});$('backupMsg').textContent='Backup lastet ned.'}
+    catch(e){$('backupMsg').textContent='Nedlastingen ble avbrutt.'}
+    return;
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  a.download=name;document.body.appendChild(a);a.click();a.remove();
+  $('backupMsg').textContent='Backup lastet ned: '+name;
+}
+$('exportBtn').onclick=exportData;
+$('importFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(!d||!Array.isArray(d.bookings))throw new Error('format');
+    const ids=new Set(state.bookings.map(b=>b.id)),eids=new Set(state.expenses.map(x=>x.id));
+    const nb=d.bookings.filter(b=>b&&b.id&&!ids.has(b.id));
+    const ne=(Array.isArray(d.expenses)?d.expenses:[]).filter(x=>x&&x.id&&!eids.has(x.id));
+    state.bookings=state.bookings.concat(nb);
+    state.expenses=state.expenses.concat(ne);
+    if(d.settings&&confirm('Bruke antall stoler, bord og priser fra backupen også?'))state.settings=Object.assign({},state.settings,d.settings);
+    await persist();renderAll();
+    $('backupMsg').textContent='Hentet inn '+nb.length+' utleier og '+ne.length+' utgifter.';
+  }catch(err){$('backupMsg').textContent='Filen kunne ikke leses. Velg en backup-fil lastet ned fra denne appen.'}
+  e.target.value='';
+});
 function renderAll(){renderInv();renderOverview();renderCal();renderAllBookings();renderExpenses();fillSettings()}
 init();
 })();
